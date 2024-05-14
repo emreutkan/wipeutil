@@ -1,6 +1,6 @@
 #!/bin/bash
 
-DEVICE=$3
+DEVICE=${@: -1}
 
 # Dictionary of file signatures
 declare -A file_signatures=(

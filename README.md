@@ -12,8 +12,6 @@ Use this script with caution. Ensure you specify the correct device to avoid dat
 wipeutil.sh [OPTION] [PATTERN/COUNT] /dev/sdX
 ```
 
-# Disk Wiping and Verification Script
-
 ## Options
 - `-h` : Display help message
 - `-v [PATTERN]` : Verify the disk after wiping

@@ -30,7 +30,7 @@ scan_for_signatures() {
     for filetype in "${!file_signatures[@]}"; do
         signature=${file_signatures[$filetype]}
         echo "Scanning for $filetype files with signature $signature"
-        if sudo od -An -v -t x1 "$DEVICE" | grep -q "$signature"; then
+        if sudo od -An -v -t x1 "$DEVICE" | grep -a -q "$signature"; then
             echo "Warning: Found $filetype file signature on the disk"
         else
             echo "No $filetype file signatures found"
@@ -93,16 +93,12 @@ if [ "$1" == "-v" ]; then
     fi
 
     # Run the verification
-    sudo od -An -v -t x1 "$DEVICE" | grep -v " $PATTERN"
-
-    if [ $? -eq 0 ]; then
-        echo "Verification passed: The disk contains only the pattern $PATTERN"
-    else
+    if sudo od -An -v -t x1 "$DEVICE" | grep -av " $PATTERN"; then
         echo "Verification failed: The disk contains other patterns than $PATTERN"
+    else
+        echo "Verification passed: The disk contains only the pattern $PATTERN"
     fi
 fi
-
-
 
 # Wipe the disk using dd based on the provided pattern if -wdd is passed
 if [ "$1" == "-wdd" ]; then
@@ -117,7 +113,7 @@ if [ "$1" == "-wdd" ]; then
     if [ "$PATTERN" == "0" ]; then
         sudo dd if=/dev/zero of="$DEVICE" bs=1M status=progress
     elif [ "$PATTERN" == "1" ]; then
-        sudo dd if=<(yes '\x01' | tr -d '\n' | dd bs=1M count=0) of="$DEVICE" bs=1M status=progress
+        sudo dd if=<(yes '\x01' | tr -d '\n') of="$DEVICE" bs=1M status=progress
     else
         # Convert pattern to lowercase
         PATTERN=$(echo "$PATTERN" | tr 'A-F' 'a-f')
@@ -130,7 +126,7 @@ if [ "$1" == "-wdd" ]; then
 
         # Create a temporary file with the pattern
         TMPFILE=$(mktemp)
-        printf "\\x$PATTERN" > "$TMPFILE"
+        yes "$PATTERN" | tr -d '\n' | head -c 1048576 > "$TMPFILE"
         sudo dd if="$TMPFILE" of="$DEVICE" bs=1M status=progress
         rm "$TMPFILE"
     fi

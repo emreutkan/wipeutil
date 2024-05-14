@@ -172,6 +172,11 @@ if [ "$1" == "-c" ]; then
     scan_for_signatures
 fi
 
+check_randomness() {
+    echo "Checking the randomness of the data on the disk"
+    sudo dd if="$DEVICE" bs=1M | ent
+}
+
 if [ "$1" == "-cr" ]; then
     check_randomness
 fi

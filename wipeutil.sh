@@ -176,6 +176,32 @@ check_randomness() {
     echo "Checking the randomness of the data on the disk"
     sudo dd if="$DEVICE" bs=1M | ent
 }
+check_randomness_no_ent() {
+    echo "Checking the randomness of the data on the disk"
+
+    # Read the entire disk in 1MB blocks, process with od, and calculate byte frequencies with awk
+    sudo dd if="$DEVICE" bs=1M | od -An -t x1 | tr -s ' ' '\n' | \
+    awk '
+    {
+        freq[$1]++
+        total++
+    }
+    END {
+        entropy = 0
+        expected_freq = total / 256
+        chi_square = 0
+
+        for (byte in freq) {
+            p = freq[byte] / total
+            entropy -= p * log(p) / log(2)
+            chi_square += ((freq[byte] - expected_freq) ^ 2) / expected_freq
+        }
+
+        print "Entropy: " entropy " bits per byte"
+        print "Chi-square: " chi_square
+        print "Total bytes analyzed: " total
+    }'
+}
 
 if [ "$1" == "-cr" ]; then
     check_randomness
